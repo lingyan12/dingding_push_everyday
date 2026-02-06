@@ -20,7 +20,7 @@ config.json:存放一个json形式的运行配置。其中的webhook、secret，
 
 ### 使用步骤如下：
 
-![image-20260206112457027](.\assets\6.png)
+![image-20260206112457027](./assets/6.png)
 
 
 
@@ -43,16 +43,16 @@ config.json:存放一个json形式的运行配置。其中的webhook、secret，
 
 ## 1.
 
-![image-20260206110016084](.\assets\1.png)
+![image-20260206110016084](./assets/1.png)
 
 ### 2
 
-![image-20260206110128491](.\assets\image-20260206110128491.png)
+![image-20260206110128491](./assets/image-20260206110128491.png)
 
 ### 3
 
-![image-20260206110151842](.\assets\image-20260206110151842.png)
+![image-20260206110151842](./assets/image-20260206110151842.png)
 
 ### 4
 
-![image-20260206110241612](.\assets\image-20260206110241612.png)
+![image-20260206110241612](./assets/image-20260206110241612.png)
