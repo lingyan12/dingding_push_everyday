@@ -1,0 +1,13 @@
+[project]
+name = "push-everyday"
+version = "0.1.0"
+description = "钉钉使用 群聊的中自定义的机器人，推送消息"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "dingtalkchatbot>=1.5.7",
+]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true

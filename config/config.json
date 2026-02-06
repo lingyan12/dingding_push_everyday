@@ -1,0 +1,19 @@
+[
+  {
+    "webhook": "you_web_hook",
+    "secret": "you_secret",
+    "template": "##### 请输入markdown内容。![图片]({IMAGE_URL})",
+    "title": "push every day",
+    "at_mobiles": [],
+    "is_at_all": true
+  },
+  {
+    "webhook": "you_web_hook",
+    "secret": "you_secret",
+    "template": "##### 请输入markdown内容。![图片]({IMAGE_URL})",
+    "title": "push every day",
+    "at_mobiles": [],
+    "is_at_all": false
+  }
+
+]
