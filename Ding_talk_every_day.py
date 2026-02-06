@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-钉钉多配置智能推送系统（优化版）
-✅ 整次运行仅抽取1条图片URL ✅ 所有配置项共享同一URL ✅ 严格校验+降级处理
+钉钉群聊推送消息
+使用钉钉群 的 Webhook机器人 推送
+
 """
 
-# 标准库导入
+
 import json
 import logging
 import os
@@ -13,8 +14,6 @@ import time
 import random
 from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
-
-# 第三方库导入
 from dingtalkchatbot.chatbot import DingtalkChatbot
 
 # =============== 常量定义 ===============
@@ -30,7 +29,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")  # 配置文件路径
 IMAGE_URL_FILE = os.path.join(CONFIG_DIR, "image.txt")  # 图片URL文件路径
-DEFAULT_TITLE = "医疗安全提醒"  # 默认消息标题
+DEFAULT_TITLE = "每日推送"  # 默认消息标题
 DEFAULT_IMAGE_PLACEHOLDER = "{IMAGE_URL}"  # 默认图片占位符
 PUSH_INTERVAL_MIN = 1  # 最小推送间隔（秒）
 PUSH_INTERVAL_MAX = 3  # 最大推送间隔（秒）
@@ -50,8 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 class DingTalkBotEnhanced:
-    """增强版钉钉机器人：支持多配置、统一图片URL、重试机制"""
-    
+
     # 钉钉允许的图片域名白名单
     WHITELIST_DOMAINS = ["alicdn.com", "qiniucdn.com", "aliyuncs.com", 
                         "cdn.", "img.", "oss-", "yourcompany.com"]
@@ -60,7 +58,7 @@ class DingTalkBotEnhanced:
     BLOCKED_DOMAINS = ["github.com", "raw.githubusercontent.com", 
                       "localhost", "127.0.0.1"]
     
-    # 支持的图片格式
+
     SUPPORTED_IMAGE_FORMATS = ["jpg", "jpeg", "png", "gif", "webp"]
     
     # 非法字符
