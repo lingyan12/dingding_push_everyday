@@ -2,10 +2,10 @@
   {
     "webhook": "you_web_hook",
     "secret": "you_secret",
-    "template": "##### 每日推送。![核心图表]({IMAGE_URL})",
-    "title": "每日推送",
+    "template": "##### 普通推送。![核心图表]({IMAGE_URL})",
+    "title": "推送测试",
     "at_mobiles": [],
-    "is_at_all": false,
+    "is_at_all": true,
 
     "send_type": "markdown_with_image",
 

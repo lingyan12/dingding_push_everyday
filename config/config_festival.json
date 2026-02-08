@@ -2,8 +2,8 @@
   {
     "webhook": "you_web_hook",
     "secret": "you_secret",
-    "template": "##### 牛马的假期推送。![核心图表]({IMAGE_URL})",
-    "title": "牛马的假期推送",
+    "template": "##### festival 特殊推送推送测试。![核心图表]({IMAGE_URL})",
+    "title": "牛马的假期推送_测试",
     "at_mobiles": [],
     "is_at_all": false,
     "send_type": "markdown_with_image",

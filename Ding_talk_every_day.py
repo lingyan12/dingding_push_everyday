@@ -55,15 +55,27 @@ MAX_RETRIES = 3  # 最大重试次数
 INITIAL_RETRY_DELAY = 1  # 初始重试延迟（秒）
 
 # =============== 日志配置 ===============
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)-8s | %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    # filename=os.path.join(LOG_DIR, 'run.log'),
-    filemode='a',
-    encoding='utf-8'
-)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # 设置日志的最低级别
+
+# 定义日志格式
+formatter = logging.Formatter('[%(asctime)s] %(levelname)-8s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+# 文件处理器：输出到日志文件
+file_handler = logging.FileHandler(os.path.join(LOG_DIR, 'run.log'), mode='a', encoding='utf-8')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# 控制台处理器：输出到PyCharm工作台
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+
+
+
+
+
 
 
 class DingTalkBotEnhanced:
