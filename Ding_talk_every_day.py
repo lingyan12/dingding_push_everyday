@@ -12,6 +12,7 @@ import os
 import re
 import time
 import random
+import datetime
 from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
 from dingtalkchatbot.chatbot import DingtalkChatbot
@@ -27,8 +28,22 @@ LOG_DIR = os.path.join(SCRIPT_DIR, "logs")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
-CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")  # 配置文件路径
-IMAGE_URL_FILE = os.path.join(CONFIG_DIR, "image.txt")  # 图片URL文件路径
+# 默认配置文件
+DEFAULT_CONFIG_FILE_NAME = "config.json"
+DEFAULT_IMG_FILE_NAME = "image.txt"
+
+
+# 时间段配置文件
+SCHEDULE_CONFIG_FILE = os.path.join(CONFIG_DIR, "schedule_config.json")
+
+# 初始化当前使用的配置文件和图片文件
+current_config_file_name = DEFAULT_CONFIG_FILE_NAME
+current_img_file_name = DEFAULT_IMG_FILE_NAME
+
+# 配置文件路径（根据时间段动态确定）
+CONFIG_FILE = os.path.join(CONFIG_DIR, current_config_file_name)
+IMAGE_URL_FILE = os.path.join(CONFIG_DIR, current_img_file_name)
+
 DEFAULT_TITLE = "每日推送"  # 默认消息标题
 DEFAULT_IMAGE_PLACEHOLDER = "{IMAGE_URL}"  # 默认图片占位符
 PUSH_INTERVAL_MIN = 1  # 最小推送间隔（秒）
@@ -64,7 +79,7 @@ class DingTalkBotEnhanced:
     # 非法字符
     ILLEGAL_CHARACTERS = [" ", "|", "{", "}"]
 
-    def __init__(self, webhook: str, secret: Optional[str] = None):
+    def __init__(self, webhook: str, secret: Optional[str] = None, custom_img_file_name:str = None, custom_config_file_name:str = None):
         """初始化钉钉机器人
         
         Args:
@@ -74,8 +89,19 @@ class DingTalkBotEnhanced:
         Raises:
             ValueError: 当webhook不包含access_token时
         """
+
+
         if "access_token" not in webhook:
             raise ValueError("❌ Webhook必须包含access_token")
+
+        if custom_config_file_name is not None:
+            global config_file_name
+            config_file_name = custom_config_file_name
+        if custom_img_file_name is not None:
+            img_file_name = custom_img_file_name
+
+
+
         
         self.bot = DingtalkChatbot(webhook, secret=secret)
         logger.info("✅ 钉钉机器人初始化成功 | 加签: %s", "已启用" if secret else "未启用")
@@ -280,6 +306,75 @@ def change_working_dir(path: str):
         os.chdir(original_dir)
 
 
+def load_schedule_config() -> Dict[str, Any]:
+    """加载时间段配置文件
+    
+    Returns:
+        Dict[str, Any]: 时间段配置
+    """
+    if not os.path.exists(SCHEDULE_CONFIG_FILE):
+        logger.warning("⚠️ 时间段配置文件不存在，使用默认配置")
+        return {"default": {"config_file": DEFAULT_CONFIG_FILE_NAME, "image_file": DEFAULT_IMG_FILE_NAME}}
+    
+    try:
+        with open(SCHEDULE_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            schedule_config = json.load(f)
+        
+        # 验证配置格式
+        if "default" not in schedule_config:
+            schedule_config["default"] = {"config_file": DEFAULT_CONFIG_FILE_NAME, "image_file": DEFAULT_IMG_FILE_NAME}
+
+        logger.info("✅ 成功加载时间段配置")
+        return schedule_config
+    except Exception as e:
+        logger.error("❌ 加载时间段配置失败: %s，使用默认配置", str(e))
+        return {"default": {"config_file": DEFAULT_CONFIG_FILE_NAME, "image_file": DEFAULT_IMG_FILE_NAME}}
+
+
+def get_current_files() -> tuple[str, str]:
+    """根据当前时间获取应使用的配置文件和图片文件
+    
+    Returns:
+        tuple[str, str]: (配置文件名, 图片文件名)
+    """
+    global current_config_file_name, current_img_file_name
+
+    # 获取当前日期
+    current_date = time.strftime("%Y-%m-%d")
+    current_datetime = datetime.datetime.strptime(current_date, "%Y-%m-%d")
+    
+    # 加载时间段配置
+    schedule_config = load_schedule_config()
+    
+    # 检查是否有匹配的时间段
+    for schedule in schedule_config.get("schedules", []):
+        # 检查特定日期
+        if "specific_dates" in schedule:
+            if current_date in schedule["specific_dates"]:
+                logger.info("📅 匹配到特定日期: %s | 配置: %s", current_date, schedule["name"])
+                current_config_file_name = schedule["config_file"]
+                current_img_file_name = schedule["image_file"]
+                return current_config_file_name, current_img_file_name
+        
+        # 检查日期范围
+        if "start_date" in schedule and "end_date" in schedule:
+            start_datetime = datetime.datetime.strptime(schedule["start_date"], "%Y-%m-%d")
+            end_datetime = datetime.datetime.strptime(schedule["end_date"], "%Y-%m-%d")
+            
+            if start_datetime <= current_datetime <= end_datetime:
+                logger.info("📅 匹配到日期范围: %s 至 %s | 配置: %s", 
+                           schedule["start_date"], schedule["end_date"], schedule["name"])
+                current_config_file_name = schedule["config_file"]
+                current_img_file_name = schedule["image_file"]
+                return current_config_file_name, current_img_file_name
+    
+    # 默认配置
+    logger.info("📅 使用默认配置")
+    current_config_file_name = schedule_config["default"]["config_file"]
+    current_img_file_name = schedule_config["default"]["image_file"]
+    return current_config_file_name, current_img_file_name
+
+
 def load_config() -> List[Dict[str, Any]]:
     """加载并验证配置文件
     
@@ -290,6 +385,9 @@ def load_config() -> List[Dict[str, Any]]:
         FileNotFoundError: 当配置文件不存在时
         ValueError: 当配置文件格式不正确时
     """
+    global CONFIG_FILE
+    CONFIG_FILE = os.path.join(CONFIG_DIR, current_config_file_name)
+    
     if not os.path.exists(CONFIG_FILE):
         raise FileNotFoundError(f"配置文件 {CONFIG_FILE} 不存在")
 
@@ -335,7 +433,15 @@ def main() -> int:
         with change_working_dir(SCRIPT_DIR):
             logger.info("🚀 钉钉每日推送脚本启动")
             
-            # 1. 获取图片URL
+            # 1. 根据当前时间选择配置文件和图片文件
+            config_file, img_file = get_current_files()
+            global CONFIG_FILE, IMAGE_URL_FILE
+            CONFIG_FILE = os.path.join(CONFIG_DIR, config_file)
+            IMAGE_URL_FILE = os.path.join(CONFIG_DIR, img_file)
+            logger.info("📄 当前使用配置文件: %s", config_file)
+            logger.info("🖼️ 当前使用图片文件: %s", img_file)
+            
+            # 2. 获取图片URL
             img_url = DingTalkBotEnhanced.pop_first_url(IMAGE_URL_FILE)
             if not img_url:
                 logger.error("❌ 无法获取图片URL，请检查文件: %s", IMAGE_URL_FILE)

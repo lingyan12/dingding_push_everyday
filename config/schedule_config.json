@@ -1,0 +1,33 @@
+{
+  "schedules": [
+    {
+      "name": "牛马放假啦",
+      "specific_dates": [
+        "2026-02-07",
+        "2026-02-08"
+      ],
+      "config_file": "config_festival.json",
+      "image_file": "image_festival.txt"
+    },
+    {
+      "name": "牛马的新年假期已开始",
+      "start_date": "2026-02-18",
+      "end_date": "2026-02-23",
+      "config_file": "config_festival.json",
+      "image_file": "image_festival.txt"
+    },
+    {
+      "name": "牛马的假期已不足",
+      "specific_dates": [
+        "2026-02-08"
+      ],
+      "config_file": "config_festival.json",
+      "image_file": "image_festival.txt"
+    }
+  ],
+  "default": {
+    "name": "牛马的默认值",
+    "config_file": "config.json",
+    "image_file": "image.txt"
+  }
+}

@@ -2,18 +2,9 @@
   {
     "webhook": "you_web_hook",
     "secret": "you_secret",
-    "template": "##### 请输入markdown内容。![图片]({IMAGE_URL})",
-    "title": "push every day",
-    "at_mobiles": [],
-    "is_at_all": true
-  },
-  {
-    "webhook": "you_web_hook",
-    "secret": "you_secret",
-    "template": "##### 请输入markdown内容。![图片]({IMAGE_URL})",
-    "title": "push every day",
+    "template": "##### 每日推送。![核心图表]({IMAGE_URL})",
+    "title": "每日推送",
     "at_mobiles": [],
     "is_at_all": false
   }
-
 ]

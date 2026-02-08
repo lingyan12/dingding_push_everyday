@@ -1,0 +1,13 @@
+[
+  {
+    "webhook": "you_web_hook",
+    "secret": "you_secret",
+    "template": "##### 牛马的假期推送。![核心图表]({IMAGE_URL})",
+    "title": "牛马的假期推送",
+    "at_mobiles": [],
+    "is_at_all": false
+  }
+]
+
+
+

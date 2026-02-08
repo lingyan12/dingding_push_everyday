@@ -11,3 +11,10 @@ uv.lock
 .venv
 *.dll
 .idea
+logs/
+
+
+
+#config
+config_ts.json
+image_ts.txt
