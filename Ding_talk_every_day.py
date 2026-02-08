@@ -28,6 +28,7 @@ LOG_DIR = os.path.join(SCRIPT_DIR, "logs")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
+
 # 默认配置文件
 DEFAULT_CONFIG_FILE_NAME = "config.json"
 DEFAULT_IMG_FILE_NAME = "image.txt"
@@ -46,6 +47,8 @@ IMAGE_URL_FILE = os.path.join(CONFIG_DIR, current_img_file_name)
 
 DEFAULT_TITLE = "每日推送"  # 默认消息标题
 DEFAULT_IMAGE_PLACEHOLDER = "{IMAGE_URL}"  # 默认图片占位符
+DEFAULT_PLACEHOLDERS = [DEFAULT_IMAGE_PLACEHOLDER]  # 默认占位符列表
+DEFAULT_SEND_TYPE = "markdown_with_image"  # 默认发送类型
 PUSH_INTERVAL_MIN = 1  # 最小推送间隔（秒）
 PUSH_INTERVAL_MAX = 3  # 最大推送间隔（秒）
 MAX_RETRIES = 3  # 最大重试次数
@@ -56,9 +59,9 @@ logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(levelname)-8s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
-    filename=os.path.join(LOG_DIR, 'run.log'),
-    filemode='a'
-    ,encoding='utf-8'
+    # filename=os.path.join(LOG_DIR, 'run.log'),
+    filemode='a',
+    encoding='utf-8'
 )
 logger = logging.getLogger(__name__)
 
@@ -146,7 +149,7 @@ class DingTalkBotEnhanced:
                                 title: str, 
                                 content: str, 
                                 img_url: str, 
-                                image_placeholder: str = DEFAULT_IMAGE_PLACEHOLDER, 
+                                image_placeholders: List[str] = None, 
                                 at_mobiles: Optional[List[str]] = None, 
                                 is_at_all: bool = False) -> bool:
         """使用外部提供的图片URL发送Markdown消息
@@ -155,7 +158,7 @@ class DingTalkBotEnhanced:
             title: 消息标题
             content: 消息内容（支持Markdown格式）
             img_url: 图片URL
-            image_placeholder: 内容中图片URL的占位符
+            image_placeholders: 内容中图片URL的占位符列表
             at_mobiles: 要@的手机号列表
             is_at_all: 是否@所有人
             
@@ -169,11 +172,19 @@ class DingTalkBotEnhanced:
             return False
         logger.info(msg)
 
-        # 2. 替换占位符或追加图片
-        if image_placeholder in content:
-            content = content.replace(image_placeholder, img_url)
-            logger.debug("🖼️ 已替换占位符为: %s", img_url)
-        else:
+        # 2. 替换所有占位符
+        if image_placeholders is None:
+            image_placeholders = DEFAULT_PLACEHOLDERS
+            
+        placeholder_found = False
+        for placeholder in image_placeholders:
+            if placeholder in content:
+                content = content.replace(placeholder, img_url)
+                placeholder_found = True
+                logger.debug("🖼️ 已替换占位符 %s 为: %s", placeholder, img_url)
+        
+        # 3. 如果没有找到占位符，将图片添加到末尾
+        if not placeholder_found:
             content += f"\n\n![监控图]({img_url})"
             logger.debug("📎 无占位符，图片已追加到末尾")
 
@@ -210,7 +221,7 @@ class DingTalkBotEnhanced:
                     
                     # 如果不是最后一次重试，等待后继续
                     if retry < MAX_RETRIES - 1:
-                        delay = INITIAL_RETRY_DELAY * (2 ** retry) + random.uniform(0, 1)
+                        delay = INITIAL_RETRY_DELAY * (2 ** retry) + random.uniform(3, 7)
                         logger.info("⏳ 等待 %.2f 秒后重试...", delay)
                         time.sleep(delay)
                     
@@ -338,7 +349,7 @@ def get_current_files() -> tuple[str, str]:
         tuple[str, str]: (配置文件名, 图片文件名)
     """
     global current_config_file_name, current_img_file_name
-
+    
     # 获取当前日期
     current_date = time.strftime("%Y-%m-%d")
     current_datetime = datetime.datetime.strptime(current_date, "%Y-%m-%d")
@@ -415,6 +426,8 @@ def load_config() -> List[Dict[str, Any]]:
         item.setdefault('title', DEFAULT_TITLE)
         item.setdefault('at_mobiles', [])
         item.setdefault('is_at_all', False)
+        item.setdefault('send_type', DEFAULT_SEND_TYPE)
+        item.setdefault('placeholders', DEFAULT_PLACEHOLDERS)
         
         valid_config.append(item)
 
@@ -463,14 +476,40 @@ def main() -> int:
                 try:
                     bot = DingTalkBotEnhanced(webhook=item['webhook'], secret=item['secret'])
 
-                    if bot.send_markdown_with_image(
-                        title=item['title'], 
-                        content=item['template'],
-                        img_url=img_url,
-                        image_placeholder=DEFAULT_IMAGE_PLACEHOLDER,
-                        at_mobiles=item['at_mobiles'],
-                        is_at_all=item['is_at_all']
-                    ):
+                    content = item['template']
+                    
+                    # 根据发送类型处理消息
+                    if item['send_type'] == "markdown_with_image":
+                        # Markdown带图片：替换所有占位符
+                        if bot.send_markdown_with_image(
+                            title=item['title'], 
+                            content=content,
+                            img_url=img_url,
+                            image_placeholders=item['placeholders'],
+                            at_mobiles=item['at_mobiles'],
+                            is_at_all=item['is_at_all']
+                        ):
+                            success_count += 1
+                    elif item['send_type'] == "markdown":
+                        # 纯Markdown：不处理图片
+                        if bot._send_with_retry(
+                            method=bot.bot.send_markdown,
+                            title=item['title'],
+                            text=content,
+                            at_mobiles=item['at_mobiles'],
+                            is_at_all=item['is_at_all']
+                        ):
+                            success_count += 1
+                    elif item['send_type'] == "text":
+                        # 纯文本：不处理图片
+                        if bot.send_text(
+                            msg=content,
+                            at_mobiles=item['at_mobiles'],
+                            is_at_all=item['is_at_all']
+                        ):
+                            success_count += 1
+                    else:
+                        logger.error("❌ 不支持的发送类型: %s", item['send_type'])
                         success_count += 1
                 except Exception as e:
                     logger.error("❌ 处理第 %d 项时出错: %s | Webhook: %s", 

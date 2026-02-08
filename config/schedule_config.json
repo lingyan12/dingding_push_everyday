@@ -4,7 +4,7 @@
       "name": "牛马放假啦",
       "specific_dates": [
         "2026-02-07",
-        "2026-02-08"
+        "2026-02-24"
       ],
       "config_file": "config_festival.json",
       "image_file": "image_festival.txt"
@@ -19,10 +19,10 @@
     {
       "name": "牛马的假期已不足",
       "specific_dates": [
-        "2026-02-08"
+        "2026-02-018"
       ],
-      "config_file": "config_festival.json",
-      "image_file": "image_festival.txt"
+      "config_file": "config.json",
+      "image_file": "image.txt"
     }
   ],
   "default": {

@@ -5,7 +5,11 @@
     "template": "##### 牛马的假期推送。![核心图表]({IMAGE_URL})",
     "title": "牛马的假期推送",
     "at_mobiles": [],
-    "is_at_all": false
+    "is_at_all": false,
+    "send_type": "markdown_with_image",
+    "placeholders": [
+      "{IMAGE_URL}"
+    ]
   }
 ]
 
