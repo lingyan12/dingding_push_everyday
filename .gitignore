@@ -15,6 +15,8 @@ logs/
 
 
 
-#config
+config/
 config_ts.json
 image_ts.txt
+config.json
+image.txt
